@@ -1,0 +1,16 @@
+{
+	"applications": [
+		{
+			"app_key": "boll7708.openvrstartup",
+			"launch_type": "binary",
+			"binary_path_windows": "OpenVRStartup.exe",
+			"is_dashboard_overlay": true,
+			"strings": {
+				"en_us": {
+					"name": "OpenVRStartup",
+					"description": "Automatically execute scripts on boot."
+				}
+			}
+		}
+	]
+}
