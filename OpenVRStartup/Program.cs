@@ -11,6 +11,9 @@ namespace OpenVRStartup
 {
     class Program
     {
+        // TODO: Write log files of which command files we execute every launch.
+        // TODO: If no log file, stop execution with instruction of SteamVR startup toggle.
+
         static void Main(string[] args)
         {
             // Starting worker
@@ -41,15 +44,12 @@ namespace OpenVRStartup
                 }
                 else
                 {
-                    Utils.Print("Waiting for 10 seconds...");
-                    Thread.Sleep(10000);
                     RunScripts();
                     OpenVR.Shutdown();
                     shouldRun = false;
                 }
                 if (!shouldRun)
                 {
-                    Thread.Sleep(5000);
                     Environment.Exit(0);
                 }
             }
