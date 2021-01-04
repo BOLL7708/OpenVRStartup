@@ -34,15 +34,10 @@ namespace OpenVRStartup
             else {
                 Utils.PrintInfo("\n========================");
                 Utils.PrintInfo(" First Run Instructions ");
-                Utils.PrintInfo("========================\n");
-                Utils.Print("To get this to launch every time you start SteamVR, do the following steps:");
-                Utils.Print("  1. Launch SteamVR.");
-                Utils.Print("  2. Open [Settings] from the hamburger menu in the SteamVR status window.");
-                Utils.Print("  3. Select the [Startup / Shutdown] section in the menu to the left.");
-                Utils.Print("  4. Click [Choose startup overlay apps].");
-                Utils.Print("  5. Locate OpenVRStartup and toggle the switch to [On].");
-                Utils.Print("\nThe next time this program runs it will be minimized and terminate as soon as scripts have been launched.");
-                Utils.Print("\nTo see this message again, delete the log file that is in the same folder.");
+                Utils.PrintInfo("========================");
+                Utils.Print("\nThis app automatically sets itself to auto-launch with SteamVR.");
+                Utils.Print("\nWhen it runs it will in turn run all .cmd files in the same folder.");
+                Utils.Print("\nThis message is only shown once, to see it again delete the log file.");
                 Utils.Print("\nPress [Enter] in this window to continue execution.");
                 Console.ReadLine();
                 _isReady = true;
@@ -97,9 +92,18 @@ namespace OpenVRStartup
             {
                 LogUtils.WriteLineToCache("OpenVR init success");
 
-                // Load app manifest
-                var appError = OpenVR.Applications.AddApplicationManifest(Path.GetFullPath("./app.vrmanifest"), false);
-                if (appError != EVRApplicationError.None) LogUtils.WriteLineToCache($"Error: Failed to load app manifest: {Enum.GetName(typeof(EVRApplicationError), appError)}");
+                // Add app manifest and set auto-launch
+                var appKey = "boll7708.openvrstartup";
+                if (!OpenVR.Applications.IsApplicationInstalled(appKey))
+                {
+                    var manifestError = OpenVR.Applications.AddApplicationManifest(Path.GetFullPath("./app.vrmanifest"), false);
+                    if (manifestError == EVRApplicationError.None) LogUtils.WriteLineToCache("Successfully installed app manifest");
+                    else LogUtils.WriteLineToCache($"Error: Failed to add app manifest: {Enum.GetName(typeof(EVRApplicationError), manifestError)}");
+                    
+                    var autolaunchError = OpenVR.Applications.SetApplicationAutoLaunch(appKey, true);
+                    if (autolaunchError == EVRApplicationError.None) LogUtils.WriteLineToCache("Successfully set app to auto launch");
+                    else LogUtils.WriteLineToCache($"Error: Failed to turn on auto launch: {Enum.GetName(typeof(EVRApplicationError), autolaunchError)}");
+                }
                 return true;
             }
         }
@@ -119,7 +123,7 @@ namespace OpenVRStartup
                     p.StartInfo.FileName = Path.Combine(Environment.CurrentDirectory, file);
                     p.Start();
                 }
-                if(files.Length == 0) LogUtils.WriteLineToCache($"Did not find any .cmd files to execute.");
+                if(files.Length == 0) LogUtils.WriteLineToCache("Did not find any .cmd files to execute.");
             } catch(Exception e)
             {
                 LogUtils.WriteLineToCache($"Error: Could not load scripts: {e.Message}");
