@@ -117,10 +117,12 @@ namespace OpenVRStartup
                 foreach (var file in files)
                 {
                     LogUtils.WriteLineToCache($"Executing: {file}");
+                    var path = Path.Combine(Environment.CurrentDirectory, file);
                     Process p = new Process();
                     p.StartInfo.CreateNoWindow = true;
                     p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                    p.StartInfo.FileName = Path.Combine(Environment.CurrentDirectory, file);
+                    p.StartInfo.FileName = Path.Combine(Environment.SystemDirectory, "cmd.exe");
+                    p.StartInfo.Arguments = $"/C \"{path}\"";
                     p.Start();
                 }
                 if(files.Length == 0) LogUtils.WriteLineToCache("Did not find any .cmd files to execute.");
