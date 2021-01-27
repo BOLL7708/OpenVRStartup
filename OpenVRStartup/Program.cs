@@ -65,8 +65,11 @@ namespace OpenVRStartup
                 }
                 else if(_isReady)
                 {    
-                    RunScripts();
+                    RunStartupScripts();
+                    WaitForQuit();
+                    OpenVR.System.AcknowledgeQuit_Exiting();
                     OpenVR.Shutdown();
+                    RunShutdownScripts();
                     shouldRun = false;
                 }
                 if (!shouldRun)
@@ -109,7 +112,7 @@ namespace OpenVRStartup
         }
 
         // Scripts
-        private static void RunScripts()
+        private static void RunStartupScripts()
         {
             try {
                 var files = Directory.GetFiles("./", "*.cmd");
@@ -129,6 +132,44 @@ namespace OpenVRStartup
             } catch(Exception e)
             {
                 LogUtils.WriteLineToCache($"Error: Could not load scripts: {e.Message}");
+            }
+        }
+        
+        private static void RunShutdownScripts()
+        {
+            try
+            {
+                var files = Directory.GetFiles("./shutdown/", "*.cmd");
+                LogUtils.WriteLineToCache($"Found: {files.Length} script(s)");
+                foreach (var file in files)
+                {
+                    LogUtils.WriteLineToCache($"Executing: {file}");
+                    var path = Path.Combine(Environment.CurrentDirectory, file);
+                    Process p = new Process();
+                    p.StartInfo.CreateNoWindow = true;
+                    p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                    p.StartInfo.FileName = Path.Combine(Environment.SystemDirectory, "cmd.exe");
+                    p.StartInfo.Arguments = $"/C \"{path}\"";
+                    p.Start();
+                }
+                if (files.Length == 0) LogUtils.WriteLineToCache("Did not find any .cmd files to execute.");
+            }
+            catch (Exception e)
+            {
+                LogUtils.WriteLineToCache($"Error: Could not load scripts: {e.Message}");
+            }
+        }
+
+        private static void WaitForQuit()
+        {
+            VREvent_t ev = new VREvent_t();
+
+            var eventExists = OpenVR.System.PollNextEvent(ref ev, Utils.SizeOf(ev));
+
+            while (!eventExists || (EVREventType)ev.eventType != EVREventType.VREvent_Quit)
+            {
+                Thread.Sleep(100);
+                eventExists = OpenVR.System.PollNextEvent(ref ev, Utils.SizeOf(ev));
             }
         }
     }
