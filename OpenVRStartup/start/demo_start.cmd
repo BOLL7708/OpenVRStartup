@@ -1,0 +1,1 @@
+msg %username% This dialog box was launched by demo_start.cmd in the ./start/ folder for OpenVRStartup. Edit this file or replace it with whatever scripts you want to launch with SteamVR.

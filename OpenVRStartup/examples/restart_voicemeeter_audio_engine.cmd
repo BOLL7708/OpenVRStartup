@@ -1,0 +1,1 @@
+start "Restart Voice Meeter Audio Engine" "C:\Program Files (x86)\VB\Voicemeeter\Voicemeeter.exe" -r

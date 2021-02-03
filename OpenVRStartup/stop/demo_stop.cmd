@@ -1,0 +1,1 @@
+msg %username% This dialog box was launched by demo_stop.cmd in the ./stop/ folder for OpenVRStartup. Edit this file or replace it with whatever scripts you want to launch when SteamVR is shutdown.

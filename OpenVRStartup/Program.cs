@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -9,14 +10,17 @@ namespace OpenVRStartup
 {
     class Program
     {
-        static string LOG_FILE_PATH = "./OpenVRStartup.log";
+        static readonly string PATH_LOGFILE = "./OpenVRStartup.log";
+        static readonly string PATH_STARTFOLDER = "./start/";
+        static readonly string PATH_STOPFOLDER = "./stop/";
+        static readonly string FILE_PATTERN = "*.cmd";
 
         [DllImport("user32.dll")]
         public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
         public const int SW_SHOWMINIMIZED = 2;
         private volatile static bool _isReady = false;
 
-        static void Main(string[] args)
+        static void Main(string[] _)
         {
             // Starting worker
             var t = new Thread(Worker);
@@ -25,7 +29,7 @@ namespace OpenVRStartup
             else LogUtils.WriteLineToCache("Error: Could not start worker thread");
 
             // Check if first run, if so do NOT minimize but write instructions.
-            if (LogUtils.LogFileExists(LOG_FILE_PATH))
+            if (LogUtils.LogFileExists(PATH_LOGFILE))
             {
                 _isReady = true;
                 IntPtr winHandle = Process.GetCurrentProcess().MainWindowHandle;
@@ -36,7 +40,8 @@ namespace OpenVRStartup
                 Utils.PrintInfo(" First Run Instructions ");
                 Utils.PrintInfo("========================");
                 Utils.Print("\nThis app automatically sets itself to auto-launch with SteamVR.");
-                Utils.Print("\nWhen it runs it will in turn run all .cmd files in the same folder.");
+                Utils.Print($"\nWhen it runs it will in turn run all {FILE_PATTERN} files in the {PATH_STARTFOLDER} folder.");
+                Utils.Print($"\nIf there are {FILE_PATTERN} files in {PATH_STOPFOLDER} it will stay and run those on shutdown.");
                 Utils.Print("\nThis message is only shown once, to see it again delete the log file.");
                 Utils.Print("\nPress [Enter] in this window to continue execution.");
                 Console.ReadLine();
@@ -64,23 +69,23 @@ namespace OpenVRStartup
                     _isConnected = InitVR();
                 }
                 else if(_isReady)
-                {    
-                    RunStartupScripts();
-                    WaitForQuit();
+                {
+                    RunScripts(PATH_STARTFOLDER);
+                    if(WeHaveScripts(PATH_STOPFOLDER)) WaitForQuit();
                     OpenVR.System.AcknowledgeQuit_Exiting();
                     OpenVR.Shutdown();
-                    RunShutdownScripts();
+                    RunScripts(PATH_STOPFOLDER);
                     shouldRun = false;
                 }
                 if (!shouldRun)
                 {
                     LogUtils.WriteLineToCache("Application exiting, writing log");
-                    LogUtils.WriteCacheToLogFile(LOG_FILE_PATH, 100);
+                    LogUtils.WriteCacheToLogFile(PATH_LOGFILE, 100);
                     Environment.Exit(0);
                 }
             }
         }
-
+        
         // Initializing connection to OpenVR
         private static bool InitVR()
         {
@@ -112,38 +117,15 @@ namespace OpenVRStartup
         }
 
         // Scripts
-        private static void RunStartupScripts()
-        {
-            try {
-                var files = Directory.GetFiles("./", "*.cmd");
-                LogUtils.WriteLineToCache($"Found: {files.Length} script(s)");
-                foreach (var file in files)
-                {
-                    LogUtils.WriteLineToCache($"Executing: {file}");
-                    var path = Path.Combine(Environment.CurrentDirectory, file);
-                    Process p = new Process();
-                    p.StartInfo.CreateNoWindow = true;
-                    p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                    p.StartInfo.FileName = Path.Combine(Environment.SystemDirectory, "cmd.exe");
-                    p.StartInfo.Arguments = $"/C \"{path}\"";
-                    p.Start();
-                }
-                if(files.Length == 0) LogUtils.WriteLineToCache("Did not find any .cmd files to execute.");
-            } catch(Exception e)
-            {
-                LogUtils.WriteLineToCache($"Error: Could not load scripts: {e.Message}");
-            }
-        }
-        
-        private static void RunShutdownScripts()
-        {
+        private static void RunScripts(string folder) {
             try
             {
-                var files = Directory.GetFiles("./shutdown/", "*.cmd");
-                LogUtils.WriteLineToCache($"Found: {files.Length} script(s)");
+                if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+                var files = Directory.GetFiles(folder, FILE_PATTERN);
+                LogUtils.WriteLineToCache($"Found: {files.Length} script(s) in {folder}");
                 foreach (var file in files)
                 {
-                    LogUtils.WriteLineToCache($"Executing: {file}");
+                    LogUtils.WriteLineToCache($"Executing: {file} from {folder}");
                     var path = Path.Combine(Environment.CurrentDirectory, file);
                     Process p = new Process();
                     p.StartInfo.CreateNoWindow = true;
@@ -152,25 +134,49 @@ namespace OpenVRStartup
                     p.StartInfo.Arguments = $"/C \"{path}\"";
                     p.Start();
                 }
-                if (files.Length == 0) LogUtils.WriteLineToCache("Did not find any .cmd files to execute.");
+                if (files.Length == 0) LogUtils.WriteLineToCache($"Did not find any .cmd files to execute in {folder}");
             }
             catch (Exception e)
             {
-                LogUtils.WriteLineToCache($"Error: Could not load scripts: {e.Message}");
+                LogUtils.WriteLineToCache($"Error: Could not load scripts from {folder}: {e.Message}");
             }
         }
 
         private static void WaitForQuit()
         {
-            VREvent_t ev = new VREvent_t();
-
-            var eventExists = OpenVR.System.PollNextEvent(ref ev, Utils.SizeOf(ev));
-
-            while (!eventExists || (EVREventType)ev.eventType != EVREventType.VREvent_Quit)
+            var shouldRun = true;
+            while(shouldRun)
             {
-                Thread.Sleep(100);
-                eventExists = OpenVR.System.PollNextEvent(ref ev, Utils.SizeOf(ev));
+                var vrEvents = new List<VREvent_t>();
+                var vrEvent = new VREvent_t();
+                uint eventSize = (uint)Marshal.SizeOf(vrEvent);
+                try
+                {
+                    while (OpenVR.System.PollNextEvent(ref vrEvent, eventSize))
+                    {
+                        vrEvents.Add(vrEvent);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Utils.PrintError($"Could not get new events: {e.Message}");
+                }
+
+                foreach (var e in vrEvents)
+                {
+                    if ((EVREventType)e.eventType == EVREventType.VREvent_Quit)
+                    {
+                        shouldRun = false;
+                    }
+                }
+                Thread.Sleep(1000);
             }
+        }
+
+        private static bool WeHaveScripts(string folder)
+        {
+            if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+            return Directory.GetFiles(folder, FILE_PATTERN).Length > 0;
         }
     }
 }

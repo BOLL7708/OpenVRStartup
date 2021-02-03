@@ -84,8 +84,17 @@
     <None Include="app.vrmanifest">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="start\demo_start.cmd">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="stop\demo_stop.cmd">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
+    <None Include="examples\restart_voicemeeter_audio_engine.cmd">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="openvr_api.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
