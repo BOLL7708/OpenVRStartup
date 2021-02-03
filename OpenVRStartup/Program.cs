@@ -72,7 +72,6 @@ namespace OpenVRStartup
                 {
                     RunScripts(PATH_STARTFOLDER);
                     if(WeHaveScripts(PATH_STOPFOLDER)) WaitForQuit();
-                    OpenVR.System.AcknowledgeQuit_Exiting();
                     OpenVR.Shutdown();
                     RunScripts(PATH_STOPFOLDER);
                     shouldRun = false;
@@ -166,6 +165,7 @@ namespace OpenVRStartup
                 {
                     if ((EVREventType)e.eventType == EVREventType.VREvent_Quit)
                     {
+                        OpenVR.System.AcknowledgeQuit_Exiting();
                         shouldRun = false;
                     }
                 }
