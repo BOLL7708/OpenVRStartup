@@ -61,7 +61,7 @@ namespace OpenVRStartup.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to v0.10.
+        ///   Looks up a localized string similar to v0.11.
         /// </summary>
         internal static string Version {
             get {

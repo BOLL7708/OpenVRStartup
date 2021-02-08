@@ -32,8 +32,7 @@ namespace OpenVRStartup
             if (LogUtils.LogFileExists(PATH_LOGFILE))
             {
                 _isReady = true;
-                IntPtr winHandle = Process.GetCurrentProcess().MainWindowHandle;
-                ShowWindow(winHandle, SW_SHOWMINIMIZED);
+                Minimize();
             }
             else {
                 Utils.PrintInfo("\n========================");
@@ -43,8 +42,9 @@ namespace OpenVRStartup
                 Utils.Print($"\nWhen it runs it will in turn run all {FILE_PATTERN} files in the {PATH_STARTFOLDER} folder.");
                 Utils.Print($"\nIf there are {FILE_PATTERN} files in {PATH_STOPFOLDER} it will stay and run those on shutdown.");
                 Utils.Print("\nThis message is only shown once, to see it again delete the log file.");
-                Utils.Print("\nPress [Enter] in this window to continue execution.");
+                Utils.Print("\nPress [Enter] in this window to continue execution.\nIf there are shutdown scripts the window will remain in the task bar.");
                 Console.ReadLine();
+                Minimize();
                 _isReady = true;
             }
 
@@ -52,6 +52,11 @@ namespace OpenVRStartup
             t.Abort();
 
             OpenVR.Shutdown();
+        }
+
+        private static void Minimize() {
+            IntPtr winHandle = Process.GetCurrentProcess().MainWindowHandle;
+            ShowWindow(winHandle, SW_SHOWMINIMIZED);
         }
 
         private static bool _isConnected = false;
@@ -124,7 +129,7 @@ namespace OpenVRStartup
                 LogUtils.WriteLineToCache($"Found: {files.Length} script(s) in {folder}");
                 foreach (var file in files)
                 {
-                    LogUtils.WriteLineToCache($"Executing: {file} from {folder}");
+                    LogUtils.WriteLineToCache($"Executing: {file}");
                     var path = Path.Combine(Environment.CurrentDirectory, file);
                     Process p = new Process();
                     p.StartInfo.CreateNoWindow = true;
@@ -133,7 +138,7 @@ namespace OpenVRStartup
                     p.StartInfo.Arguments = $"/C \"{path}\"";
                     p.Start();
                 }
-                if (files.Length == 0) LogUtils.WriteLineToCache($"Did not find any .cmd files to execute in {folder}");
+                if (files.Length == 0) LogUtils.WriteLineToCache($"Did not find any {FILE_PATTERN} files to execute in {folder}");
             }
             catch (Exception e)
             {
@@ -143,6 +148,7 @@ namespace OpenVRStartup
 
         private static void WaitForQuit()
         {
+            Utils.Print("This window remains to wait for the shutdown of SteamVR to run additional scripts on exit.");
             var shouldRun = true;
             while(shouldRun)
             {
