@@ -22,6 +22,9 @@ namespace OpenVRStartup
 
         static void Main(string[] _)
         {
+            // Window setup
+            Console.Title = Properties.Resources.AppName;
+
             // Starting worker
             var t = new Thread(Worker);
             LogUtils.WriteLineToCache($"Application starting ({Properties.Resources.Version})");

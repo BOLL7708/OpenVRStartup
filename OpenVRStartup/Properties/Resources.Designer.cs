@@ -61,7 +61,26 @@ namespace OpenVRStartup.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to v0.11.
+        ///   Looks up a localized string similar to OpenVRStartup.
+        /// </summary>
+        internal static string AppName {
+            get {
+                return ResourceManager.GetString("AppName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+        /// </summary>
+        internal static System.Drawing.Icon logo {
+            get {
+                object obj = ResourceManager.GetObject("logo", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to v0.13.
         /// </summary>
         internal static string Version {
             get {
