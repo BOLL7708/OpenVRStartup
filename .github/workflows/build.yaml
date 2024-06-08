@@ -47,6 +47,9 @@ jobs:
           name: release
           path: OpenVRStartup_${{github.event.release.tag_name}}.zip
 
+      - name: Restore local tools
+        run: dotnet tool restore
+
   release:
     name: Upload Release
     runs-on: ubuntu-latest
