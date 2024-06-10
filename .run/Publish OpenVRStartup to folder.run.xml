@@ -1,0 +1,6 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Publish OpenVRStartup to folder" type="DotNetFolderPublish" factoryName="Publish to folder">
+    <riderPublish configuration="Release" include_native_libs_for_self_extract="true" platform="x64" produce_single_file="true" runtime="win-x64" target_folder="$PROJECT_DIR$/OpenVRStartup/bin/Publish/net8.0/win-x64/publish" target_framework="net8.0" uuid_high="-9035782352972986543" uuid_low="-6291577981127348275" />
+    <method v="2" />
+  </configuration>
+</component>
