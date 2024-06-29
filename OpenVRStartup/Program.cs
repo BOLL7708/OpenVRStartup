@@ -23,7 +23,14 @@ namespace OpenVRStartup
         static void Main(string[] _)
         {
             // Window setup
-            Console.Title = Properties.Resources.AppName;
+            try
+            {
+                Console.Title = Properties.Resources.AppName;
+            }
+            catch (Exception exception)
+            {
+                Debug.WriteLine($"Failed to set title: {exception.Message}");
+            }
 
             // Starting worker
             var t = new Thread(Worker);
@@ -34,25 +41,25 @@ namespace OpenVRStartup
             // Check if first run, if so do NOT minimize but write instructions.
             if (LogUtils.LogFileExists(PATH_LOGFILE))
             {
+                Utils.PrintInfo("Log file exists, skipping first run instructions.\n");
                 _isReady = true;
                 Minimize();
             }
             else {
-                Utils.PrintInfo("\n========================");
+                Utils.PrintInfo("========================");
                 Utils.PrintInfo(" First Run Instructions ");
                 Utils.PrintInfo("========================");
-                Utils.Print("\nThis app automatically sets itself to auto-launch with SteamVR.");
-                Utils.Print($"\nWhen it runs it will in turn run all {FILE_PATTERN} files in the {PATH_STARTFOLDER} folder.");
-                Utils.Print($"\nIf there are {FILE_PATTERN} files in {PATH_STOPFOLDER} it will stay and run those on shutdown.");
-                Utils.Print("\nThis message is only shown once, to see it again delete the log file.");
-                Utils.Print("\nPress [Enter] in this window to continue execution.\nIf there are shutdown scripts the window will remain in the task bar.");
+                Utils.Print("1. This app automatically sets itself to auto-launch with SteamVR.");
+                Utils.Print($"2. When it runs it will in turn run all {FILE_PATTERN} files in the {PATH_STARTFOLDER} folder.");
+                Utils.Print($"3. If there are {FILE_PATTERN} files in {PATH_STOPFOLDER} it will stick around and run those on shutdown.");
+                Utils.Print($"4. This message is only shown once, to see it again delete the {PATH_LOGFILE} file.");
+                Utils.Print("\nPress [Enter] in this window to continue execution.\n");
                 Console.ReadLine();
                 Minimize();
                 _isReady = true;
             }
 
             Console.ReadLine();
-            t.Abort();
 
             OpenVR.Shutdown();
         }
@@ -80,7 +87,7 @@ namespace OpenVRStartup
                 {
                     RunScripts(PATH_STARTFOLDER);
                     if(WeHaveScripts(PATH_STOPFOLDER)) WaitForQuit();
-                    OpenVR.Shutdown();
+                    else OpenVR.Shutdown();
                     RunScripts(PATH_STOPFOLDER);
                     shouldRun = false;
                 }
@@ -175,6 +182,7 @@ namespace OpenVRStartup
                     if ((EVREventType)e.eventType == EVREventType.VREvent_Quit)
                     {
                         OpenVR.System.AcknowledgeQuit_Exiting();
+                        OpenVR.Shutdown();
                         shouldRun = false;
                     }
                 }
